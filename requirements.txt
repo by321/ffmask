@@ -1,0 +1,9 @@
+Pillow
+click
+torch
+onnxruntime
+numpy
+opencv_python
+cv2
+tqdm
+face_recognition
