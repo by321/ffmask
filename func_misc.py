@@ -4,8 +4,12 @@ from PIL import Image
 def LoadInputImage(input_file:str) -> Image:
     try:
         i1 = Image.open(input_file)
+        print(f"input image: {input_file}, size: {i1.size}, mode: {i1.mode}")
+        #print(f"info: {i1.info}")
+        #print(f"exif: {i1.getexif()}")
+
         if i1.mode != "L" and i1.mode != "RGB":
-            print(f"converting {input_file} from mode {i1.mode} to RGB")
+            print(f"  * converting from mode {i1.mode} to RGB")
             i1 = i1.convert("RGB")
     except Exception as inst:
         print(type(inst),':',inst, file=sys.stderr)
