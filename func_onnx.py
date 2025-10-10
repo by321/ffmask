@@ -1,7 +1,9 @@
-import sys, cv2, tqdm
+import sys, time, cv2, tqdm
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
+#from PIL import Image, ImageOps
 import onnxruntime as ort
+import func_misc
 
 def get_execution_provider_by_partial_name(ep):
     available_providers = ort.get_available_providers()
@@ -90,7 +92,6 @@ def print_frame_info(f,name):
 
 def ProcessOneVideo(input_file, output_file, model, ep):
     """Process an input video and save to output video in MP4 format."""
-    import func_misc
     onnx_model_path=func_misc.GetDefaultU2NetModelPath_ONNX(model,ensure_exists=True)
     exec_provider=get_execution_provider_by_partial_name(ep)
 
@@ -168,12 +169,9 @@ def ProcessOneVideo(input_file, output_file, model, ep):
     out.release()
     print(f"Processed {frame_count} frames. Done.")
 
-def ProcessOneImage(inimage, outimage, model, ep, alpha_png):
-    import func_misc, time
+def GetMask_PIL(model, exec_provider, img):
     onnx_model_path=func_misc.GetDefaultU2NetModelPath_ONNX(model,ensure_exists=True)
-    exec_provider=get_execution_provider_by_partial_name(ep)
 
-    img=func_misc.LoadInputImage(inimage)
     img320 = img.resize((320, 320), Image.Resampling.LANCZOS)
     #print(f"resized image size: {img320.size}, mode: {img320.mode}")
     if img320.mode == 'L':
@@ -198,11 +196,15 @@ def ProcessOneImage(inimage, outimage, model, ep, alpha_png):
     #print(f"ma {ma} mi {mi}")
     if (ma!=mi):
         d1=255.0*(d1-mi)/(ma-mi)
-        im=Image.fromarray(d1.astype(np.uint8), mode='L')
+        d1 = cv2.resize(d1.astype(np.uint8), img.size, interpolation=cv2.INTER_CUBIC)
+        maskImg=Image.fromarray(d1, mode='L')
     else:
-        im=Image.new(mode='L', size=d1.shape, color=0)
-    #if theCtx['invert_mask']: im=ImageOps.invert(im)
-    del d1
+        maskImg=Image.new(mode='L', size=img.size, color=0)
+    return maskImg
 
-    maskImg=im.resize(img.size,resample=Image.LANCZOS)
+def ProcessOneImage(inimage, outimage, model, ep, alpha_png):
+    exec_provider=get_execution_provider_by_partial_name(ep)
+    img=func_misc.LoadInputImage(inimage)
+    maskImg=GetMask_PIL(model, exec_provider, img)
     func_misc.SaveOutputImage(img, maskImg, outimage, alpha_png)
+
