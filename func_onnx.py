@@ -197,14 +197,14 @@ def GetMask_PIL(model, exec_provider, img):
     if (ma!=mi):
         d1=255.0*(d1-mi)/(ma-mi)
         d1 = cv2.resize(d1.astype(np.uint8), img.size, interpolation=cv2.INTER_CUBIC)
-        maskImg=Image.fromarray(d1, mode='L')
     else:
-        maskImg=Image.new(mode='L', size=img.size, color=0)
-    return maskImg
+        d1= np.zeros((img.height, img.width), dtype=np.uint8)
+    return d1
 
 def ProcessOneImage(inimage, outimage, model, ep, alpha_png):
     exec_provider=get_execution_provider_by_partial_name(ep)
     img=func_misc.LoadInputImage(inimage)
-    maskImg=GetMask_PIL(model, exec_provider, img)
+    npimg=GetMask_PIL(model, exec_provider, img)
+    maskImg=Image.fromarray(npimg, mode='L')
     func_misc.SaveOutputImage(img, maskImg, outimage, alpha_png)
 
