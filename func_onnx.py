@@ -48,9 +48,9 @@ def preprocess_grayscale_image(image,isPilImage=False):
     mean = 0.485
     std = 0.229
     img_array = (img_array - mean) / std
-    img_array = np.expand_dims(img_array, axis=2)  # Shape: [height, width, 1]
-    img_array = np.repeat(img_array, 3, axis=2)    # Shape: [height, width, 3]
-    img_array = img_array.transpose(2, 0, 1)  # Shape: [3, height, width]
+    #print("shape before",img_array.shape)
+    img_array = np.repeat(img_array[np.newaxis, :, :], 3, axis=0)  # irectly to CHW
+    #print("shape after",img_array.shape)
     img_array = np.expand_dims(img_array, axis=0)  # Shape: [1, 3, height, width]
     return img_array
 
@@ -72,7 +72,7 @@ def preprocess_rgb_image(image):
     for c in range(3):
         if max_vals[c] > 0:
             img_array[:, :, c] = (img_array[:, :, c] / max_vals[c] - mean[:, :, c]) / std[:, :, c]
-    img_array = img_array.transpose(2, 0, 1)  # Shape: [3, height, width]
+    img_array = img_array.transpose(2, 0, 1)  # Shape: [3, height, width], HWC to CHW
     img_array = np.expand_dims(img_array, axis=0)  # Shape: [1, 3, height, width]
     return img_array
 
