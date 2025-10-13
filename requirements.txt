@@ -1,9 +1,10 @@
-Pillow
 click
-torch
-onnxruntime
-numpy
-opencv_python
-cv2
 tqdm
+Pillow
 face_recognition
+numpy
+torch
+onnxruntime_gpu
+opencv_python
+opencv_python_headless
+gradio==5.44.1
