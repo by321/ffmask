@@ -42,7 +42,7 @@ Run "python ffmask_gui.py", wait until you see a message like "Running on local 
 - You can then select filters and click on "Filter Mask" to apply filters to the selected mask. A new, filtered mask will be generated.
 - The combined view image box lets you see the masked input image (input*mask/255, basically using mask as an alpah channel), mask image, and input image. All these images can be downloaded.
 
-The GUI is built using gradio.
+The GUI is built using gradio version 5.44.1.
 
 ## CLI Usage
 
