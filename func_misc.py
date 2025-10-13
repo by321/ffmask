@@ -1,16 +1,21 @@
 import os, sys
 from PIL import Image
 
+def ConvertTo_RGB_or_L(img:Image) -> Image:
+    if img.mode == "L" or img.mode == "RGB": return img
+
+    tgtmode='RGB' # by default convert to RGB
+    if img.mode=="LA" or img.mode=="La": # L with alpha
+        tgtmode='L'
+
+    print(f"  * converting from mode {img.mode} to {tgtmode}")
+    return img.convert(tgtmode)
+
 def LoadInputImage(input_file:str) -> Image:
     try:
         i1 = Image.open(input_file)
         print(f"input image: {input_file}, size: {i1.size}, mode: {i1.mode}")
-        #print(f"info: {i1.info}")
-        #print(f"exif: {i1.getexif()}")
-
-        if i1.mode != "L" and i1.mode != "RGB":
-            print(f"  * converting from mode {i1.mode} to RGB")
-            i1 = i1.convert("RGB")
+        i1=ConvertTo_RGB_or_L(i1)
     except Exception as inst:
         print(type(inst),':',inst, file=sys.stderr)
         print("failed to load input image:",input_file, file=sys.stderr)

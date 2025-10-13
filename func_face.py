@@ -121,9 +121,7 @@ def ProcessOneVideo_face(input_file, output_file):
     out.release()
     print(f"Processed {frame_count} frames. Done.")
 
-
-def ProcessOneImage_face(inimage, outimage, alpha_png):
-    img=func_misc.LoadInputImage(inimage)
+def GetFaceMasks_PIL(img):
     maskImg=Image.new('L',size=img.size,color=0)
 
     hc=GetHaarCascade()
@@ -145,5 +143,9 @@ def ProcessOneImage_face(inimage, outimage, alpha_png):
 
         pts=_convex_hull_from_face_landmarks(face_landmarks_list[0], x0, y0, 1.05)
         ImageDraw.Draw(maskImg).polygon(pts,fill=255,outline=255)
+    return maskImg
 
+def ProcessOneImage_face(inimage, outimage, alpha_png):
+    img=func_misc.LoadInputImage(inimage)
+    maskImg=GetFaceMasks_PIL(img)
     func_misc.SaveOutputImage(img, maskImg, outimage, alpha_png)
