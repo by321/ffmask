@@ -7,7 +7,7 @@ This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xu
 - Can process both image and videos.
 - Run on either CPU or GPU (using ONNX runtime).
 
-A mask is generated for input image or each video frame. No further processing of the mask is done. The intention is to use the mask in image or video editors for further processing.
+![ffmask GUI](images/ffmask_gui.png)
 
 ![boat](images/boat.jpg)
 ![water drop](images/waterdrop.jpg)
@@ -31,8 +31,8 @@ Face detection mode (the "-m face" or "--model face" option):
 	- u2netp.pth.onnx : small and fast version of u2net
 	- u2net_human_seg.pth.onnx : u2net variant trained for human detection
 
-- If you see an error message about missing openh264-*.dll, download the appropriate DLL from https://github.com/cisco/openh264 and put it somewhere on your path.
-- If you want to run conv_u2net_to_onnx.py, you need to install PyTorch.
+ If you see an error message about missing openh264-*.dll, download the appropriate DLL from https://github.com/cisco/openh264 and put it somewhere on your path.
+
 
 ## GUI Usage
 
@@ -68,6 +68,9 @@ Usage examples:
     python ffmask.py image input.jpg mask.jpg
 
     python ffmask.py video input.mp4 mask.mp4
+
+A mask is generated for input image or each video frame. No further processing of the mask is done.
+The intention is to use the mask in image or video editors for further processing.
 
 ## Creating and Quantizing ONNX model files
 
