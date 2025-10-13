@@ -31,13 +31,13 @@ def SaveOutputImage(img:Image, maskImg:Image, out_fn:str, alpha_png:bool):
         print(f"saving mask image: {out_fn}")
         maskImg.save(out_fn)
 
-U2Net_pth_files={'u2net':'u2net.pth', 'u2netp':'u2netp.pth', 'u2neths':'u2net_human_seg.pth'}
+DIS_U2Net_pth_files={'dis':'isnet-general-use.pth', 'u2net':'u2net.pth', 'u2netp':'u2netp.pth', 'u2neths':'u2net_human_seg.pth'}
 
 def GetDefaultU2NetModelPath_Torch(model_name:str):
-    if model_name not in U2Net_pth_files:
+    if model_name not in DIS_U2Net_pth_files:
         sys.exit(f"unexpected U2Net model name: {model_name}")
     current_dir = os.path.dirname(__file__)
-    return os.path.join(current_dir,"pretrained_models",U2Net_pth_files[model_name])
+    return os.path.join(current_dir,"pretrained_models",DIS_U2Net_pth_files[model_name])
 
 def GetDefaultU2NetModelPath_ONNX(model_name:str,ensure_exists:bool=False):
     x = GetDefaultU2NetModelPath_Torch(model_name) + ".onnx"

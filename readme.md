@@ -1,8 +1,8 @@
 ## ffmask - detect foreground object or human face from images and videos
 
-This is a Python project based on  [U²-Net](https://github.com/xuebinqin/U-2-Net "u2net") and [Face Recognition](https://github.com/ageitgey/face_recognition "Face Recognition"):
+This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xuebinqin/DIS "DIS"), [U²-Net](https://github.com/xuebinqin/U-2-Net "u2net"), and [Face Recognition](https://github.com/ageitgey/face_recognition "Face Recognition"):
 
-- Use u2net used to detect foreground objects. The default u2net model, the small and fast version (u2netp), and human segmentation version are supported.
+- Use DIS or u2net used to detect foreground objects. For u2net, the default u2net model, the small and fast version (u2netp), and human segmentation version are supported.
 - Use face recognition to detect face outline.
 - Can process both image and videos.
 - Run on either CPU or GPU (using ONNX runtime).
@@ -24,14 +24,27 @@ Face detection mode (the "-m face" or "--model face" option):
 - Run "pip install -r requirements.txt".
 - Download the model files from https://huggingface.co/by321/ffmask/tree/main and save to pretrained_models directory:
 
-	- haarcascade_frontalface_alt2.xml, for Haar Cascasde face detection
-	- haarcascade_frontalface_default.xml, for Haar Cascade face detection
-	- u2net.pth.onnx, the main u2net model file
-	- u2netp.pth.onnx, the small and fast version
-	- u2net_human_seg.pth.onnx, specially trained version to detect humans
+	- haarcascade_frontalface_alt2.xml : for Haar Cascasde face detection
+	- haarcascade_frontalface_default.xml : for Haar Cascade face detection
+	- isnet-general-use.pth.onnx : Dichotomous Image Segmentation model file
+	- u2net.pth.onnx : u2net model file
+	- u2netp.pth.onnx : small and fast version of u2net
+	- u2net_human_seg.pth.onnx : u2net variant trained for human detection
+
 - If you see an error message about missing openh264-*.dll, download the appropriate DLL from https://github.com/cisco/openh264 and put it somewhere on your path.
 - If you want to run conv_u2net_to_onnx.py, you need to install PyTorch.
-## Usage
+
+## GUI Usage
+
+Run "python ffmask_gui.py", wait until you see a message like "Running on local URL: http://127.0.0.1:7860". Open a web browser, type "127.0.0.1:7860" in the address bar and press ENTER. You should see the GUI page. Here's the general usage:
+
+- Drag and drop an image onto input image box, select a model, click on "Create Mask".
+- You can then select filters and click on "Filter Mask" to apply filters to the selected mask. A new, filtered mask will be generated.
+- The combined view image box lets you see the masked input image (input*mask/255, basically using mask as an alpah channel), mask image, and input image. All these images can be downloaded.
+
+The GUI is built using gradio.
+
+## CLI Usage
 
 Run "python ffmask.py" will print an overview of the usage:
 

@@ -3,7 +3,7 @@
 import os, sys, click
 
 opt_exec_provider = click.option('-e', '--exec-provider', type=str, default='', help='set ONNX execution provider, can be partial name eg cpu, cuda')
-opt_detection_model = click.option('-m', '--model', type=click.Choice(['u2net', 'u2netp', 'u2neths', 'face']),
+opt_detection_model = click.option('-m', '--model', type=click.Choice(['dis','u2net', 'u2netp', 'u2neths', 'face']),
                                     default='u2net', show_default=True, help='select model to use')
 arg_input_file = click.argument("input_file", type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True))
 arg_output_file = click.argument("output_file", type=click.Path(exists=False,file_okay=True, dir_okay=False, writable=True))

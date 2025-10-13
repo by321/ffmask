@@ -5,6 +5,11 @@ from PIL import Image
 import onnxruntime as ort
 import func_misc
 
+#return normalizing mean, std, and input size for a given model
+def get_model_preprocess_parameters(model):
+    if model=='dis': return [0.5,0.5,0.5], [1,1,1], (1024,1024)
+    return [0.485, 0.456, 0.406], [0.229, 0.224, 0.225], (320,320) # u2net, u2netp, u2neths
+
 def get_execution_provider_by_partial_name(ep):
     available_providers = ort.get_available_providers()
     if len(available_providers)==0:
@@ -22,7 +27,7 @@ def get_execution_provider_by_partial_name(ep):
     sys.exit(f"could not find ONNX execution provider name matching '{ep}'\n"
              f"available providers are: {available_providers}")
 
-def preprocess_grayscale_image(image,isPilImage=False):
+def preprocess_grayscale_image(image, pre_mean:list[float], pre_std:list[float], isPilImage=False):
     """
     Process a grayscale PIL image with resizing, max normalization,
     mean-std normalization, and channel expansion.
@@ -45,16 +50,14 @@ def preprocess_grayscale_image(image,isPilImage=False):
     img_array /= max_val
 
     # Apply mean-std normalization
-    mean = 0.485
-    std = 0.229
-    img_array = (img_array - mean) / std
+    img_array = (img_array - pre_mean[0]) / pre_std[0]
     #print("shape before",img_array.shape)
     img_array = np.repeat(img_array[np.newaxis, :, :], 3, axis=0)  # irectly to CHW
     #print("shape after",img_array.shape)
     img_array = np.expand_dims(img_array, axis=0)  # Shape: [1, 3, height, width]
     return img_array
 
-def preprocess_rgb_image(image):
+def preprocess_rgb_image(image, pre_mean:list[float], pre_std:list[float]):
     """
     Process an image with resizing, per-channel max and mean-std normalization.
 
@@ -64,11 +67,10 @@ def preprocess_rgb_image(image):
     Returns:
         numpy.ndarray, shape [1, 3, height, width], processed image
     """
-
     img_array = np.array(image, dtype=np.float32)  # Shape: [height, width, 3]
     max_vals = img_array.max(axis=(0, 1))  # Shape: [3]
-    mean = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 3)
-    std = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 3)
+    mean = np.array(pre_mean, dtype=np.float32).reshape(1, 1, 3)
+    std = np.array(pre_std, dtype=np.float32).reshape(1, 1, 3)
     for c in range(3):
         if max_vals[c] > 0:
             img_array[:, :, c] = (img_array[:, :, c] / max_vals[c] - mean[:, :, c]) / std[:, :, c]
@@ -116,7 +118,7 @@ def ProcessOneVideo(input_file, output_file, model, ep):
         cap.release()
         sys.exit(-2)
 
-    print(f"processing video '{input_file}' with model '{model}'...")
+    print(f"processing video with model file '{onnx_model_path}'...")
     if exec_provider=='':
         ort_session = ort.InferenceSession(onnx_model_path)
     else:
@@ -126,6 +128,7 @@ def ProcessOneVideo(input_file, output_file, model, ep):
 
     # Process frames
     frame_count = 0; isGrayScale=False
+    pre_mean,pre_std,model_input_size=get_model_preprocess_parameters(model)
     while True:
         ret, frame = cap.read()
         if not ret: break
@@ -135,12 +138,12 @@ def ProcessOneVideo(input_file, output_file, model, ep):
             isGrayScale=IsFrameGrayScale(frame)
             #print(f"\n\ngrayscale flag: {isGrayScale}\n\n")
         h, w, n = frame.shape#; print("w h extracted:",h,w,n)
-        img320=cv2.resize(frame, (320,320), interpolation=cv2.INTER_LINEAR)
-        print_frame_info(img320,"img320")
+        img_resized=cv2.resize(frame, model_input_size, interpolation=cv2.INTER_LINEAR)
+        print_frame_info(img_resized,"img_resized")
         if isGrayScale:
-            x=preprocess_grayscale_image(img320)
+            x=preprocess_grayscale_image(img_resized,pre_mean,pre_std)
         else:
-            x=preprocess_rgb_image(cv2.cvtColor(img320, cv2.COLOR_BGR2RGB))
+            x=preprocess_rgb_image(cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB),pre_mean,pre_std)
         print_frame_info(x,"x")
 
         ort_inputs = {ort_session.get_inputs()[0].name: x}
@@ -171,13 +174,15 @@ def ProcessOneVideo(input_file, output_file, model, ep):
 
 def GetMask_PIL(model, exec_provider, img):
     onnx_model_path=func_misc.GetDefaultU2NetModelPath_ONNX(model,ensure_exists=True)
+    print(f"processing image with model file '{onnx_model_path}' ...")
 
-    img320 = img.resize((320, 320), Image.Resampling.LANCZOS)
-    #print(f"resized image size: {img320.size}, mode: {img320.mode}")
-    if img320.mode == 'L':
-        x=preprocess_grayscale_image(img320,isPilImage=True)
+    pre_mean,pre_std,model_input_size=get_model_preprocess_parameters(model)
+    img_resized = img.resize(model_input_size, Image.Resampling.LANCZOS)
+    #print(f"resized image size: {img_resized.size}, mode: {img_resized.mode}")
+    if img_resized.mode == 'L':
+        x=preprocess_grayscale_image(img_resized,pre_mean,pre_std,isPilImage=True)
     else:
-        x=preprocess_rgb_image(img320)
+        x=preprocess_rgb_image(img_resized,pre_mean,pre_std)
     #print(f"input image size: {x.shape}, dtype: {x.dtype}")
     if exec_provider=='':
         ort_session = ort.InferenceSession(onnx_model_path)
