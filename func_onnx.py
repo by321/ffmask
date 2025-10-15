@@ -8,7 +8,9 @@ import func_misc
 #return normalizing mean, std, and input size for a given model
 def get_model_preprocess_parameters(model):
     if model=='dis': return [0.5,0.5,0.5], [1,1,1], (1024,1024)
-    return [0.485, 0.456, 0.406], [0.229, 0.224, 0.225], (320,320) # u2net, u2netp, u2neths
+    if model in ['u2net', 'u2netp', 'u2neths']:
+        return[0.485, 0.456, 0.406], [0.229, 0.224, 0.225], (320,320)
+    sys.exit(f"unknown model: {model}")
 
 def get_execution_provider_by_partial_name(ep):
     available_providers = ort.get_available_providers()
