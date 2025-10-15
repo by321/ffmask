@@ -2,6 +2,7 @@ click
 tqdm
 Pillow
 face_recognition
+face_recognition_models
 numpy
 torch
 onnxruntime_gpu
