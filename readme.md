@@ -2,9 +2,10 @@
 
 This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xuebinqin/DIS "DIS"), [U²-Net](https://github.com/xuebinqin/U-2-Net "u2net"), and [Face Recognition](https://github.com/ageitgey/face_recognition "Face Recognition"):
 
-- Use DIS or u2net used to detect foreground objects. For u2net, the default u2net model, the small and fast version (u2netp), and human segmentation version are supported.
+- Use DIS or U²-Net to detect foreground objects. For U²-Net, the default model (u2net), the small and fast version (u2netp), and the variant trained for human segmentation (u2neths) are supported.
 - Use face recognition to detect face outline.
-- Can process both image and videos.
+- Has both GUI and CLI versions. In the GUI, you can interactively apply filters to masks, and blend input image with a background color or image using mask as alpha channel.
+- The CLI version can process both image and videos.
 - Run on either CPU or GPU (using ONNX runtime).
 
 ![ffmask GUI](images/gui0.jpg) 
@@ -42,7 +43,7 @@ Run "python ffmask_gui.py", wait until you see a message like "Running on local 
 
 - Drag and drop an image onto input image box, select a model, click on "Create Mask".
 - You can then select filters and click on "Filter Mask" to apply filters to the selected mask. A new, filtered mask will be generated.
-- The combined view image box lets you see the masked input image (input*mask/255, basically using mask as an alpah channel), mask image, and input image. All these images can be downloaded.
+- The combined view image box uses the selected mask as alpha channel, and blends the input image with a background color or a background image, or it can show the mask image itself, or the input image. All images can be downloaded.
 
 The GUI is built using gradio version 5.44.1.
 
