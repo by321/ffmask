@@ -7,8 +7,10 @@ This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xu
 - Can process both image and videos.
 - Run on either CPU or GPU (using ONNX runtime).
 
-![ffmask GUI](images/gui0.jpg) ![ffmask GUI](images/gui1.jpg)
-
+![ffmask GUI](images/gui0.jpg) 
+------
+![ffmask GUI](images/gui1.jpg)
+------
 ![boat](images/boat.jpg)
 ![water drop](images/waterdrop.jpg)
 
