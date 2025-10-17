@@ -8,7 +8,7 @@ This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xu
 - The CLI version can process both image and videos.
 - Run on either CPU or GPU (using ONNX runtime).
 
-![ffmask GUI](images/gui0.jpg) 
+![ffmask GUI](images/gui0.jpg)
 ------
 ![ffmask GUI](images/gui1.jpg)
 ------
@@ -74,6 +74,10 @@ Usage examples:
 
 A mask is generated for input image or each video frame. No further processing of the mask is done.
 The intention is to use the mask in image or video editors for further processing.
+
+## Known Issues
+
+Do not work with .avif files. Apparently the PIL package has some issues with it.
 
 ## Creating and Quantizing ONNX model files
 
