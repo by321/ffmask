@@ -24,6 +24,12 @@ MSG_NO_INPUT_FOR_MASK="No input image to create mask from."
 VIEW_MODE_MIBC="Masked Input over BG Color"
 VIEW_MODE_MIBI="Masked Input over BG Image"
 
+#Unlike what the documentation says, ColorPicker actually returns 4 kinds of strings:
+# color changed to: 'rgba(49.836245031524115, 105.8758538593013, 134.61874999999998, 1)' type=<class 'str'>
+# color changed to: '#326b8' type=<class 'str'>
+# color changed to: 'rgb(102, 0, 71)' type=<class 'str'>
+# color changed to: 'hsl(0, 10%, 20%)' type=<class 'str'>
+#This function handles 3 of them, but not the HSL format
 def parse_color_str(clrstr):
     if clrstr[0]=='#': return clrstr #looks good already
     if not clrstr.startswith('rgb'): # neither rgb(r,g,b) nor rgba(r,g,b,a)
@@ -50,6 +56,7 @@ def open_models_info_page():
         subprocess.call(('xdg-open', html_abs_path))
 
 def return_selection_index(evt: gr.SelectData):
+    print("return_selection_index() called, index:", evt.index)
     return evt.index
 
 def create_mask_from_input(generated_masks,input_image, onnx_provider, model_selection):
@@ -76,25 +83,19 @@ def create_mask_from_input(generated_masks,input_image, onnx_provider, model_sel
     mg = gr.Gallery(value=generated_masks, selected_index=select_idx)
     return mg,select_idx
 
-def update_combined_view(update_reason,view_mode, input_image, generated_masks, selected_idx, bg_color,bg_image):
-    #first, check for conditions that don't affect what is displayed in combined view
-    if update_reason=='bg_color_change': #only update combined view if view mode is masked input over bg color
-        if view_mode != VIEW_MODE_MIBC: return gr.skip(), ''
-    if update_reason=='bg_image_change': #only update combined view if view mode is masked input over bg image
-        if view_mode != VIEW_MODE_MIBI: return gr.skip(), ''
-    if update_reason=='mask_selection_change': #no need to update combined view if view mode is input image
-        if view_mode == "Input": return gr.skip(), ''
+def update_combined_view(view_mode, input_image, generated_masks, selected_idx, bg_color,bg_image):
+    print(f"update_combined_view(), view_mode={view_mode}")
 
-    #now we need to update combined view
-    if view_mode == "Input": return input_image,''
-    #print("bg color:", bg_color, type(bg_color))
+    if view_mode == "Input": return input_image
 
     #the remaining cases all need a mask selected
-    if generated_masks is None or len(generated_masks)==0: return None,'' #no mask yet
+    if generated_masks is None or len(generated_masks)==0:
+        print("  no masks generated yet, returning")
+        return None
+
     print("update_combined_view input image:", input_image.size,input_image.mode)
     mask=generated_masks[selected_idx][0]
-    print("  mask:", type(mask), mask.mode)
-    if view_mode == "Mask": return mask,''
+    if view_mode == "Mask": return mask
 
     if mask.mode!='L': # Gallery converts grayscale to RGB, so we take just one channel
         mask=mask.getchannel(0)
@@ -106,7 +107,7 @@ def update_combined_view(update_reason,view_mode, input_image, generated_masks, 
         inew.paste(input_image,None,mask)
         t1=time.perf_counter()-t1
     else: #view mode is masked input over background image
-        if bg_image is None: return None,'' #no background image yet
+        if bg_image is None: return None #no background image yet
         inew=bg_image
         if inew.size != input_image.size:
             inew=inew.resize(input_image.size, Image.LANCZOS)
@@ -115,7 +116,7 @@ def update_combined_view(update_reason,view_mode, input_image, generated_masks, 
         t1=time.perf_counter()-t1
 
     print(f"image merge time: {t1*1000:.1f} ms")
-    return inew,''
+    return inew
     '''
     orig_np = np.array(input_image)
     t1=time.perf_counter()
@@ -154,7 +155,6 @@ def filter_mask(generated_masks, selected_idx, dilate_image, kernel_size, iterat
     return mg, select_idx
 
 with gr.Blocks(fill_width=True) as demo:
-    update_reason=gr.State(value="") #reason for last update of combined view
     selected_idx = gr.State(value=0) # gradio doesn't let us access properties (WHY !), so we have to use a State
     bg_image=gr.State(value=None) #background image for combined view
     gr.Markdown("## Foreground and Face Mask Generator GUI")
@@ -207,46 +207,38 @@ with gr.Blocks(fill_width=True) as demo:
     btn_ShowModelInfo.click(fn=open_models_info_page)
 
     btn_CreateMask.click( # create mask button clicked
-        fn=create_mask_from_input,
+        fn=create_mask_from_input, #this will trigger mask_gallery.select
         inputs=[mask_gallery,input_image, onnx_provider, model_selection],
         outputs=[mask_gallery,selected_idx]
-    ).then(
-        fn=update_combined_view,
-        inputs=[update_reason, view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
     )
-    '''
-    input_image.change( # input image changed by user
-        fn=lambda x: print("image cleared" if x is None else f"input image size: {x.size}"),
-        inputs=[input_image],
-        outputs=[]
-    )
-    '''
+
     input_image.input( # input image changed by user
         fn=lambda: ([],0), # first clear masks generatedso far
         inputs=[],
         outputs=[mask_gallery, selected_idx]
     ).then(
         fn=update_combined_view,
-        inputs=[update_reason, view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
+        inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        outputs=[combined_view]
     #).then(lambda: print("input_image.change() called"), inputs=[], outputs=[])
     )
 
+    def _bg_color_input_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
+        if view_mode != VIEW_MODE_MIBC: return gr.skip() #not masked input over background color
+        return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
     bg_color.input( #background color changed by user
-        fn=lambda: "bg_color_change", inputs=[],outputs=[update_reason]
-     ).then ( # on user update
-        #fn=lambda clr: print(f"color changed to: '{clr}' type={type(clr)}"),
-        fn=update_combined_view,
-        inputs=[update_reason, view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
+        fn=_bg_color_input_update_view,
+        inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        outputs=[combined_view]
     )
+
+    def _bg_image_input_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
+        if view_mode != VIEW_MODE_MIBI: return gr.skip() #not masked input over background image
+        return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
     bg_image.input( #background image changed by user
-        fn=lambda: "bg_image_change", inputs=[], outputs=[update_reason]
-    ).then ( # on user update
-        fn=update_combined_view,
-        inputs=[update_reason, view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
+        fn=_bg_image_input_update_view,
+        inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        outputs=[combined_view]
     )
 
     btn_ClearAll.click( #clear all button clicked
@@ -261,36 +253,31 @@ with gr.Blocks(fill_width=True) as demo:
         outputs=[mask_gallery, selected_idx]
     ).then(
         fn=update_combined_view,
-        inputs=[update_reason,view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
+        inputs=[view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        outputs=[combined_view]
     )
 
     btn_FilterMask.click( #filter mask button clicked
-        fn=filter_mask,
+        fn=filter_mask, #this will trigger mask_gallery.select
         inputs=[mask_gallery, selected_idx, chk_dilate, kernel_size, iterations, chk_invert, chk_blur, blur_kernel_size],
         outputs=[mask_gallery,selected_idx]
-    ).then(
-        fn=lambda: "mask_selection_change", inputs=[],outputs=[update_reason] #new mask selected
-    ).then(
-        fn=update_combined_view,
-        inputs=[update_reason,view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
     )
 
+    def _mask_gallery_select_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
+        if view_mode == "Input": return gr.skip() #no need to update combined view
+        return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
     mask_gallery.select( #new mask selected
         fn=return_selection_index, inputs=[], outputs=selected_idx
     ).then(
-        fn=lambda: "mask_selection_change", inputs=[],outputs=[update_reason]
-    ).then(
-        fn=update_combined_view,
-        inputs=[update_reason,view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
+        fn=_mask_gallery_select_update_view,
+        inputs=[view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        outputs=[combined_view]
     )
 
-    view_mode.change( #combined view mode changed
+    view_mode.input( #combined view mode changed
         fn=update_combined_view,
-        inputs=[update_reason,view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
-        outputs=[combined_view,update_reason]
+        inputs=[view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        outputs=[combined_view]
     )
 
 demo.launch()
