@@ -150,7 +150,7 @@ def ProcessOneVideo(input_file, output_file, model, ep):
 
         ort_inputs = {ort_session.get_inputs()[0].name: x}
         ort_outs = ort_session.run(None, ort_inputs)
-        d1 = ort_outs[0].squeeze()
+        d1 = ort_outs[0][:,0,:,:].squeeze()
         print_frame_info(d1,"ort_outs[0].squeeze()")
         ma=np.max(d1)
         mi=np.min(d1)
@@ -194,7 +194,8 @@ def GetMask_PIL(model, exec_provider, img):
     t1=time.perf_counter()
     ort_inputs = {ort_session.get_inputs()[0].name: x}
     ort_outs = ort_session.run(None, ort_inputs)
-    d1 = ort_outs[0].squeeze()
+    print("****** ort_session.run returned, ort_outs[0].shape:",ort_outs[0].shape)
+    d1 = ort_outs[0][:,0,:,:].squeeze()
     t1=time.perf_counter()-t1
     print(f"model inference time: {t1*1000:.1f} ms")
     #print(type(d1),d1.shape )
