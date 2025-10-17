@@ -39,7 +39,7 @@ Face detection mode (the "-m face" or "--model face" option):
 
 ## GUI Usage
 
-Run "python ffmask_gui.py", wait until you see a message like "Running on local URL: http://127.0.0.1:7860". Open a web browser, type "127.0.0.1:7860" in the address bar and press ENTER. You should see the GUI page. Here's the general usage:
+Run "python ffmask_gui_1.py", wait until you see a message like "Running on local URL: http://127.0.0.1:7860". Open a web browser, type "127.0.0.1:7860" in the address bar and press ENTER. You should see the GUI page. Here's the general usage:
 
 - Drag and drop an image onto input image box, select a model, click on "Create Mask".
 - You can then select filters and click on "Filter Mask" to apply filters to the selected mask. A new, filtered mask will be generated.
