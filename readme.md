@@ -29,10 +29,10 @@ Face detection mode (the "-m face" or "--model face" option):
 
 	- haarcascade_frontalface_alt2.xml : for Haar Cascasde face detection
 	- haarcascade_frontalface_default.xml : for Haar Cascade face detection
-	- isnet-general-use.pth.onnx : Dichotomous Image Segmentation model file
-	- u2net.pth.onnx : u2net model file
-	- u2netp.pth.onnx : small and fast version of u2net
-	- u2net_human_seg.pth.onnx : u2net variant trained for human detection
+	- isnet-general-use.onnx : Dichotomous Image Segmentation model file
+	- u2net.onnx : u2net model file
+	- u2netp.onnx : small and fast version of u2net
+	- u2net_human_seg.onnx : u2net variant trained for human detection
 
  If you see an error message about missing openh264-*.dll, download the appropriate DLL from https://github.com/cisco/openh264 and put it somewhere on your path.
 

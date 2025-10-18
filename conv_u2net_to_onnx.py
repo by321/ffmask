@@ -1,5 +1,7 @@
 import os, sys, click
 
+TORCH_MODEL_FILES={'dis':'isnet-general-use.pth', 'u2net':'u2net.pth', 'u2netp':'u2netp.pth', 'u2neths':'u2net_human_seg.pth'}
+
 @click.group()
 def cli():
     """Image processing CLI tool with convert and quantize commands."""
@@ -8,16 +10,24 @@ def cli():
 @cli.command()
 @click.argument('model_name', type=click.Choice(['u2net', 'u2netp', 'u2neths']))
 @click.option('--output-file', '-o', help='Destination image file path')
+
+
+def GetDefaultTorchModelPath(model_name:str):
+    if model_name not in TORCH_MODEL_FILES:
+        sys.exit(f"unexpected U2Net model name: {model_name}")
+    current_dir = os.path.dirname(__file__)
+    return os.path.join(current_dir,"pretrained_models",TORCH_MODEL_FILES[model_name])
+
 def convert(model_name, output_file):
 
-    import func_misc
-    pth_file=func_misc.GetDefaultU2NetModelPath_Torch(model_name)
+    pth_file=GetDefaultTorchModelPath(model_name)
     if not os.path.isfile(pth_file):
-        print(f"U2Net PyTorch file doesn't exist: {pth_file}",file=sys.stderr)
+        print(f"PyTorch file doesn't exist: {pth_file}",file=sys.stderr)
         quit()
 
     if output_file is None:
-        output_file = func_misc.GetDefaultU2NetModelPath_ONNX(model_name)
+        base, _ = os.path.splitext(pth_file)
+        output_file = base + ".onnx"
     print("input :",pth_file)
     print("output:",output_file)
     if os.path.isfile(output_file):
