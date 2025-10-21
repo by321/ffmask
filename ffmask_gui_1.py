@@ -10,12 +10,8 @@ import func_onnx, func_face, func_misc
 #ONNX execution providers
 ONNX_EPS = ['<default>'] + [prov for prov in ort.get_available_providers()]
 
-#names and descriptions, names are used to determine path to model files
-MODELS=( ("u2net"  , "U²-Net: Salient Object Detector"),
-         ("u2netp" , "U²-Net-p: tiny and fast version of U²-Net"),
-         ("u2neths", "U²-Net-hs: U²-Net variant for human detection"),
-         ("dis"    , "DIS: Dichotomous Image Segmentation"),
-         ("face"   , "Face Mask") )
+MODELS=[(x.name,x.desc) for x in func_misc.MODELS_LIST]
+MODELS.append(("face","Face Mask"))
 MODELS_DESC=(m[1] for m in MODELS)
 MSG_FILTER_NO_MASK="Cannot filter mask. No mask created or selected."
 MSG_NO_FILTER="No filter selected/enabled."
@@ -24,7 +20,7 @@ MSG_NO_INPUT_FOR_MASK="No input image to create mask from."
 VIEW_MODE_MIBC="Masked Input over BG Color"
 VIEW_MODE_MIBI="Masked Input over BG Image"
 
-#Unlike what the documentation says, ColorPicker actually returns 4 kinds of strings:
+#Unlike what the documentation says, gradio's ColorPicker actually returns 4 kinds of strings:
 # color changed to: 'rgba(49.836245031524115, 105.8758538593013, 134.61874999999998, 1)' type=<class 'str'>
 # color changed to: '#326b8' type=<class 'str'>
 # color changed to: 'rgb(102, 0, 71)' type=<class 'str'>
@@ -204,6 +200,9 @@ with gr.Blocks(fill_width=True) as demo:
                 bg_color = gr.ColorPicker(label="Background Color", value="#000000", interactive=True)
                 bg_image = gr.Image(label="Background Image", sources=["upload", "clipboard"],height=600,type="pil",image_mode="RGB")
 
+    #inputs to update_combined_view()
+    update_combined_view_inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image]
+
     btn_ShowModelInfo.click(fn=open_models_info_page)
 
     btn_CreateMask.click( # create mask button clicked
@@ -218,7 +217,8 @@ with gr.Blocks(fill_width=True) as demo:
         outputs=[mask_gallery, selected_idx]
     ).then(
         fn=update_combined_view,
-        inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        #inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        inputs=update_combined_view_inputs,
         outputs=[combined_view]
     #).then(lambda: print("input_image.change() called"), inputs=[], outputs=[])
     )
@@ -228,7 +228,7 @@ with gr.Blocks(fill_width=True) as demo:
         return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
     bg_color.input( #background color changed by user
         fn=_bg_color_input_update_view,
-        inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
 
@@ -237,7 +237,7 @@ with gr.Blocks(fill_width=True) as demo:
         return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
     bg_image.input( #background image changed by user
         fn=_bg_image_input_update_view,
-        inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
 
@@ -253,7 +253,7 @@ with gr.Blocks(fill_width=True) as demo:
         outputs=[mask_gallery, selected_idx]
     ).then(
         fn=update_combined_view,
-        inputs=[view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
 
@@ -270,13 +270,13 @@ with gr.Blocks(fill_width=True) as demo:
         fn=return_selection_index, inputs=[], outputs=selected_idx
     ).then(
         fn=_mask_gallery_select_update_view,
-        inputs=[view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
 
     view_mode.input( #combined view mode changed
         fn=update_combined_view,
-        inputs=[view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image],
+        inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
 

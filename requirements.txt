@@ -1,11 +1,12 @@
 click
-tqdm
-Pillow
 face_recognition
 face_recognition_models
+gradio==5.44.1
 numpy
-torch
 onnxruntime_gpu
 opencv_python
 opencv_python_headless
-gradio==5.44.1
+Pillow
+requests
+torch
+tqdm

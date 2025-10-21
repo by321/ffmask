@@ -1,16 +1,41 @@
-import sys, time, cv2, tqdm
+import os,sys, time, cv2, tqdm
 import numpy as np
 from PIL import Image
 #from PIL import Image, ImageOps
 import onnxruntime as ort
 import func_misc
 
-#return normalizing mean, std, and input size for a given model
-def get_model_preprocess_parameters(model):
-    if model=='dis': return [0.5,0.5,0.5], [1,1,1], (1024,1024)
-    if model in ['u2net', 'u2netp', 'u2neths']:
-        return[0.485, 0.456, 0.406], [0.229, 0.224, 0.225], (320,320)
-    sys.exit(f"unknown model: {model}")
+
+def CreateOnnxSession(exec_provider,theModel):
+    print(f"starting ONNX session, execution provider='{exec_provider}' model file='{theModel.filename}'")
+    if not os.path.exists(theModel.filename):
+        print("model file does not exist, starting download...")
+        func_misc.download_missing_file(theModel.url, theModel.filename)
+
+    if exec_provider=='':
+        ort_session = ort.InferenceSession(theModel.filename)
+    else:
+        ort_session = ort.InferenceSession(theModel.filename,providers=[exec_provider])
+    print("model input:",ort_session.get_inputs()[0])
+    return ort_session
+
+def RunOnnxSession(ort_session:ort.InferenceSession, input_data, printInfo=False):
+    ort_inputs = {ort_session.get_inputs()[0].name: input_data}
+    ort_outs = ort_session.run(None, ort_inputs)
+    if printInfo:print("*** ort_session.run() returned ort_outs[0].shape:",ort_outs[0].shape)
+    d1 = ort_outs[0][:,0,:,:].squeeze()
+    return d1
+
+def PostProcessMask(model_name,mask,imgw,imgh):
+    if model_name.startswith("birefnet"): mask=sigmoid(mask)
+    ma=np.max(mask)
+    mi=np.min(mask)
+    if (ma!=mi):
+        mask=255.0*(mask-mi)/(ma-mi)
+        mask = cv2.resize(mask.astype(np.uint8), (imgw,imgh), interpolation=cv2.INTER_CUBIC)
+    else:
+        mask= np.zeros((imgh, imgw), dtype=np.uint8) #numpy size is height first
+    return mask
 
 def get_execution_provider_by_partial_name(ep):
     available_providers = ort.get_available_providers()
@@ -93,10 +118,12 @@ def IsFrameGrayScale(frame):
 def print_frame_info(f,name):
     #print(f"name:{name}, shape: {f.shape}, dtype: {f.dtype}")
     pass
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 def ProcessOneVideo(input_file, output_file, model, ep):
     """Process an input video and save to output video in MP4 format."""
-    onnx_model_path=func_misc.GetDefaultU2NetModelPath_ONNX(model,ensure_exists=True)
+    theModel=func_misc.GetModelInfo(model)
     exec_provider=get_execution_provider_by_partial_name(ep)
 
     # Open the input video
@@ -110,7 +137,6 @@ def ProcessOneVideo(input_file, output_file, model, ep):
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # Get total frame count
-    update_interval=10
 
     # Define the codec (H.264 for high quality, fallback to mp4v if needed)
     fourcc = cv2.VideoWriter_fourcc(*'h264')
@@ -120,17 +146,16 @@ def ProcessOneVideo(input_file, output_file, model, ep):
         cap.release()
         sys.exit(-2)
 
-    print(f"processing video with model file '{onnx_model_path}'...")
-    if exec_provider=='':
-        ort_session = ort.InferenceSession(onnx_model_path)
-    else:
-        ort_session = ort.InferenceSession(onnx_model_path,providers=[exec_provider])
-    print(ort_session.get_inputs()[0])
-    pbar= tqdm.tqdm(total=total_frames, desc="Processing frames", unit="frame")
+    ort_session=CreateOnnxSession(exec_provider,theModel)
 
+    pbar= tqdm.tqdm(total=total_frames, desc="Processing frames", unit="frame")
     # Process frames
     frame_count = 0; isGrayScale=False
-    pre_mean,pre_std,model_input_size=get_model_preprocess_parameters(model)
+    pre_mean=theModel.mean
+    pre_std=theModel.std
+    model_input_size=(theModel.width,theModel.height)
+    update_interval=2
+    last_update_time = time.time()-update_interval-1
     while True:
         ret, frame = cap.read()
         if not ret: break
@@ -148,26 +173,19 @@ def ProcessOneVideo(input_file, output_file, model, ep):
             x=preprocess_rgb_image(cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB),pre_mean,pre_std)
         print_frame_info(x,"x")
 
-        ort_inputs = {ort_session.get_inputs()[0].name: x}
-        ort_outs = ort_session.run(None, ort_inputs)
-        d1 = ort_outs[0][:,0,:,:].squeeze()
-        print_frame_info(d1,"ort_outs[0].squeeze()")
-        ma=np.max(d1)
-        mi=np.min(d1)
-        #print(f"ma {ma} mi {mi}")
-        if (ma!=mi):
-            processed_frame=255.0*(d1-mi)/(ma-mi) #normalize
-            processed_frame = processed_frame.astype(np.uint8)
-            processed_frame = cv2.resize(processed_frame, (w,h), interpolation=cv2.INTER_CUBIC)
-            print_frame_info(processed_frame,"processed_frame")
-        else:
-            processed_frame=np.zeros((h,w), dtype=np.uint8)
+        d1=RunOnnxSession(ort_session,x)
+        processed_frame=PostProcessMask(theModel.name,d1,w,h)
 
         out.write(processed_frame)
         frame_count += 1
-        # Update progress bar every N frames
-        if frame_count % update_interval == 0 or frame_count == total_frames:
-            pbar.update( frame_count - pbar.n)
+
+        tn=time.time()
+        if tn-last_update_time > update_interval:
+            last_update_time = tn
+            if frame_count<=total_frames: #reported total frames can be wrong
+                pbar.update( frame_count - pbar.n)
+            else:
+                pbar.update( total_frames - pbar.n)
 
     pbar.close()
     cap.release()
@@ -175,39 +193,24 @@ def ProcessOneVideo(input_file, output_file, model, ep):
     print(f"Processed {frame_count} frames. Done.")
 
 def GetMask_PIL(model, exec_provider, img):
-    onnx_model_path=func_misc.GetDefaultU2NetModelPath_ONNX(model,ensure_exists=True)
-    print(f"processing image with model file '{onnx_model_path}' ...")
+    theModel=func_misc.GetModelInfo(model)
 
-    pre_mean,pre_std,model_input_size=get_model_preprocess_parameters(model)
+    model_input_size=(theModel.width,theModel.height)
     img_resized = img.resize(model_input_size, Image.Resampling.LANCZOS)
     #print(f"resized image size: {img_resized.size}, mode: {img_resized.mode}")
     if img_resized.mode == 'L':
-        x=preprocess_grayscale_image(img_resized,pre_mean,pre_std,isPilImage=True)
+        x=preprocess_grayscale_image(img_resized,theModel.mean,theModel.std,isPilImage=True)
     else:
-        x=preprocess_rgb_image(img_resized,pre_mean,pre_std)
-    #print(f"input image size: {x.shape}, dtype: {x.dtype}")
-    if exec_provider=='':
-        ort_session = ort.InferenceSession(onnx_model_path)
-    else:
-        ort_session = ort.InferenceSession(onnx_model_path,providers=[exec_provider])
+        x=preprocess_rgb_image(img_resized,theModel.mean,theModel.std)
+
+    ort_session=CreateOnnxSession(exec_provider,theModel)
+
     #print(ort_session.get_inputs()[0])
     t1=time.perf_counter()
-    ort_inputs = {ort_session.get_inputs()[0].name: x}
-    ort_outs = ort_session.run(None, ort_inputs)
-    print("****** ort_session.run returned, ort_outs[0].shape:",ort_outs[0].shape)
-    d1 = ort_outs[0][:,0,:,:].squeeze()
+    d1=RunOnnxSession(ort_session,x,printInfo=True)
     t1=time.perf_counter()-t1
     print(f"model inference time: {t1*1000:.1f} ms")
-    #print(type(d1),d1.shape )
-    ma=np.max(d1)
-    mi=np.min(d1)
-    #print(f"ma {ma} mi {mi}")
-    if (ma!=mi):
-        d1=255.0*(d1-mi)/(ma-mi)
-        d1 = cv2.resize(d1.astype(np.uint8), img.size, interpolation=cv2.INTER_CUBIC)
-    else:
-        d1= np.zeros((img.height, img.width), dtype=np.uint8)
-    return d1
+    return PostProcessMask(model,d1,img.width,img.height)
 
 def ProcessOneImage(inimage, outimage, model, ep, alpha_png):
     exec_provider=get_execution_provider_by_partial_name(ep)
