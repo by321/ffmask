@@ -1,4 +1,4 @@
-Foreground object or human face detection, background removal or replacement
+## Foreground object and human face detection, background removal and replacement
 
 This is a Python project (both CLI and GUI) for salient object detection (mask creation) and background removal/replacement:
 
