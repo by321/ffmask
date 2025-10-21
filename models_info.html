@@ -73,7 +73,7 @@
 </head>
 <body>
     <h1>FFMask Models Summary</h1>
-    
+
     <table>
         <thead>
             <tr>
@@ -96,8 +96,22 @@
             </tr>
             <tr>
                 <td class="model-name">DIS</td>
-                <td class="description">Dichotomous Image Segmentation model that uses a fully convolutional neural network with multi-scale feature integration to predict pixel-wise saliency maps, achieving state-of-the-art performance on benchmark datasets for salient object detection. The "successor" to U²-Net for most images.</td>
+                <td class="description">Dichotomous Image Segmentation model that uses a fully convolutional neural network with
+                    multi-scale feature integration to predict pixel-wise saliency maps, achieving state-of-the-art performance
+                    on benchmark datasets for salient object detection.</td>
             </tr>
+
+            <tr>
+                <td class="model-name">BiRefNet Lite</td>
+                <td class="description">
+The lite version of BiRefNet, a state-of-the-art model that employs a novel bilateral reference approach that
+integrates multi-scale features and attention mechanisms to achieve superior accuracy.
+<br>
+Although  more accurate than U²-Net and DIS in general, BiRefNet is also larger and slower, even the lite version of BiRefNet
+is larger than the full version of U²-Net and DIS.
+                </td>
+            </tr>
+
             <tr>
                 <td class="model-name">Face Mask</td>
                 <td class="description">This is implemented using:
@@ -111,7 +125,7 @@
             </tr>
         </tbody>
     </table>
-    
+
     <footer>
         <p>These models represent different approaches in computer vision from classical ML to modern deep learning techniques.</p>
     </footer>
