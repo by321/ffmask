@@ -1,4 +1,4 @@
-## ffmask - detect foreground object or human face from images and videos
+## ffmask - foreground object or human face detection / background removal
 
 This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xuebinqin/DIS "DIS"), [U²-Net](https://github.com/xuebinqin/U-2-Net "u2net"), and [Face Recognition](https://github.com/ageitgey/face_recognition "Face Recognition"):
 
@@ -25,16 +25,19 @@ Face detection mode (the "-m face" or "--model face" option):
 - Install ONNX runtime for your system.
 - Clone this repository.
 - Run "pip install -r requirements.txt".
-- Download the model files from https://huggingface.co/by321/ffmask/tree/main and save to pretrained_models directory:
 
-	- haarcascade_frontalface_alt2.xml : for Haar Cascasde face detection
-	- haarcascade_frontalface_default.xml : for Haar Cascade face detection
-	- isnet-general-use.onnx : Dichotomous Image Segmentation model file
-	- u2net.onnx : u2net model file
-	- u2netp.onnx : small and fast version of u2net
-	- u2net_human_seg.onnx : u2net variant trained for human detection
+Model files should be automatically downloaded the first time you use them, but sometimes the automatic download fails. In that case, you can download them manually and put them in "pretrained_models" folder.
 
- If you see an error message about missing openh264-*.dll, download the appropriate DLL from https://github.com/cisco/openh264 and put it somewhere on your path.
+From [https://huggingface.co/by321/ffmask/tree/main](https://huggingface.co/by321/ffmask/tree/main), download:
+
+	- isnet-general-use.onnx : Dichotomous Image Segmentation model file, 170 MB
+	- u2net.onnx : u2net model file, 168 MB
+	- u2net_human_seg.onnx : u2net variant trained for human detection, 168 MB
+	- u2netp.onnx : small and fast version of u2net, 4.40 MB
+
+And the [BiRefNet General Lite model file (214 MB)](https://github.com/ZhengPeng7/BiRefNet/releases/download/v1/BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx).
+
+If you see an error message about missing openh264-*.dll, download the appropriate DLL from https://github.com/cisco/openh264 and put it somewhere on your path.
 
 
 ## GUI Usage
