@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFMask Models Summary</title>
+    <style>
+        body {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #e3f2fd;
+        }
+        .model-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+        .description {
+            color: #555;
+            line-height: 1.5;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 600px) {
+            table, th, td {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>FFMask Models Summary</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Model</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="model-name">U²-Net</td>
+                <td class="description">A deep learning model for salient object detection that accurately identifies and segments the most visually prominent objects in images using a nested U-structure architecture with supervision at multiple scales.</td>
+            </tr>
+            <tr>
+                <td class="model-name">U²-Net-p</td>
+                <td class="description">The "lite" version of U²-Net with reduced parameters and computational complexity, maintaining high-quality salient object detection performance while being more suitable for deployment on resource-constrained devices.</td>
+            </tr>
+            <tr>
+                <td class="model-name">U²-Net-hs</td>
+                <td class="description">A human-segmentation variant of U²-Net specifically trained for detecting and segmenting human figures in images, optimized for applications like photo editing and portrait extraction with high accuracy on human subjects.</td>
+            </tr>
+            <tr>
+                <td class="model-name">DIS</td>
+                <td class="description">Dichotomous Image Segmentation model that uses a fully convolutional neural network with
+                    multi-scale feature integration to predict pixel-wise saliency maps, achieving state-of-the-art performance
+                    on benchmark datasets for salient object detection.</td>
+            </tr>
+
+            <tr>
+                <td class="model-name">BiRefNet Lite</td>
+                <td class="description">
+The lite version of BiRefNet, a state-of-the-art model that employs a novel bilateral reference approach that
+integrates multi-scale features and attention mechanisms to achieve superior accuracy.
+<br>
+Although  more accurate than U²-Net and DIS in general, BiRefNet is also larger and slower, even the lite version of BiRefNet
+is larger than the full version of U²-Net and DIS.
+                </td>
+            </tr>
+
+            <tr>
+                <td class="model-name">Face Mask</td>
+                <td class="description">This is implemented using:
+				<ul>
+				<li><b>Haar Cascade</b>, a classical machine learning method using Haar-like features and cascade classifiers for rapid object detection, particularly effective for face detection in OpenCV, known for its speed and efficiency on traditional hardware.
+				</li>
+				<li><b>Face_recognition</b> package by Adam Geitgey, a Python library built on dlib that provides simple APIs for face detection, facial landmark extraction, and face recognition using deep learning models. </li>
+				<li><b>Dlib</b>, an open-source C++ library for machine learning, computer vision, and image processing, offering robust tools for shape detection and object recognition, with a Python interface for easy integration in packages like face_recognition.
+				</li>
+				</ul>
+            </tr>
+        </tbody>
+    </table>
+
+    <footer>
+        <p>These models represent different approaches in computer vision from classical ML to modern deep learning techniques.</p>
+    </footer>
+</body>
+</html>
