@@ -1,4 +1,4 @@
-import subprocess, os, platform, cv2, time
+import os, cv2, time
 from PIL import Image
 import gradio as gr
 import onnxruntime as ort
