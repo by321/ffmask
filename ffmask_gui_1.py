@@ -2,10 +2,10 @@ import subprocess, os, platform, cv2, time
 from PIL import Image
 import gradio as gr
 import onnxruntime as ort
-#from rembg import new_session, remove
 import numpy as np
 
 import func_onnx, func_face, func_misc
+
 
 #ONNX execution providers
 ONNX_EPS = ['<default>'] + [prov for prov in ort.get_available_providers()]
@@ -39,17 +39,6 @@ def parse_color_str(clrstr):
     g = min(max(round(float(values[1].strip())), 0), 255)
     b = min(max(round(float(values[2].strip())), 0), 255)
     return f"#{r:02x}{g:02x}{b:02x}" # to #rrggbb format
-
-def open_models_info_page():
-    html_abs_path = os.path.join(os.path.dirname(__file__), "models_info.html")
-    print("HTML info path:", html_abs_path)
-
-    if platform.system() == 'Darwin':       # macOS
-        subprocess.call(('open', html_abs_path))
-    elif platform.system() == 'Windows':    # Windows
-        os.startfile(html_abs_path)
-    else:                                   # linux variants
-        subprocess.call(('xdg-open', html_abs_path))
 
 def return_selection_index(evt: gr.SelectData):
     print("return_selection_index() called, index:", evt.index)
@@ -168,10 +157,9 @@ with gr.Blocks(fill_width=True) as demo:
                                             label="Model Selection", interactive=True,scale=3)
             with gr.Row():
                 btn_CreateMask = gr.Button("Create Mask",scale=3)
-                btn_ShowModelInfo = gr.Button("Models Info",scale=2)
-                #gr.HTML("<a href='/file=models_info.html' target='_blank'>Models Info</a>")
+                gr.Button("Models Info").click( fn=None,
+                    js="() => window.open('https://html-preview.github.io/?url=https://github.com/by321/ffmask/blob/main/static/models_info.html', '_blank')" )
 
-            #gr.HTML("<hr>")
             gr.Markdown("### Filter Selected Mask:",container=False)
             with gr.Group():
                 chk_dilate = gr.Checkbox(label="Dilate Mask", value=False, container=False)
@@ -202,8 +190,6 @@ with gr.Blocks(fill_width=True) as demo:
 
     #inputs to update_combined_view()
     update_combined_view_inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image]
-
-    btn_ShowModelInfo.click(fn=open_models_info_page)
 
     btn_CreateMask.click( # create mask button clicked
         fn=create_mask_from_input, #this will trigger mask_gallery.select
@@ -279,5 +265,4 @@ with gr.Blocks(fill_width=True) as demo:
         inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
-
 demo.launch()
