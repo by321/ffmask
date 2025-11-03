@@ -1,8 +1,8 @@
-## ffmask - foreground object or human face detection / background removal
+## Foreground object and human face detection, background removal and replacement
 
-This is a Python project (both CLI and GUI) based on [DIS](https://github.com/xuebinqin/DIS "DIS"), [U²-Net](https://github.com/xuebinqin/U-2-Net "u2net"), and [Face Recognition](https://github.com/ageitgey/face_recognition "Face Recognition"):
+This is a Python project (both CLI and GUI) for salient object detection (mask creation) and background removal/replacement:
 
-- Use DIS or U²-Net to detect foreground objects. For U²-Net, the default model (u2net), the small and fast version (u2netp), and the variant trained for human segmentation (u2neths) are supported.
+- Supported SOD models: U²-Net (default model, the tiny and fast version, human segmentation variant), DIS, and BirefNet.
 - Use face recognition to detect face outline.
 - Has both GUI and CLI versions. In the GUI, you can interactively apply filters to masks, and blend input image with a background color or image using mask as alpha channel.
 - The CLI version can process both image and videos.
@@ -87,3 +87,10 @@ Do not work with .avif files. Apparently the PIL package has some issues with it
 The ONNX models files were converted from original PyTorch files using conv_u2net_to_onnx.py. You can also use conv_u2net_to_onnx.py to truncate ONNX files for smaller model size and faster execution time.
 Run "python conv_u2net_to_onnx.py --help" for usage info.
 
+## Acknowledgements
+
+- [The U²-Net model](https://github.com/xuebinqin/U-2-Net)
+- [The DIS model](https://github.com/xuebinqin/DIS)
+- [The BiRefNet model](https://github.com/ZhengPeng7/BiRefNet)
+- [The Face Recognition project](https://github.com/ageitgey/face_recognition)
+  
