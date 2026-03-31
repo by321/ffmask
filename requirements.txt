@@ -1,7 +1,7 @@
 click
 face_recognition
 face_recognition_models
-gradio==5.44.1
+gradio==5.49.1
 numpy
 onnxruntime_gpu
 opencv_python
