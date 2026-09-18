@@ -3,6 +3,7 @@ from PIL import Image
 import gradio as gr
 import onnxruntime as ort
 import numpy as np
+from colorama import Fore, Back, Style
 
 import func_onnx, func_face, func_misc
 
@@ -19,6 +20,11 @@ MSG_NO_INPUT_FOR_MASK="No input image to create mask from."
 
 VIEW_MODE_MIBC="Masked Input over BG Color"
 VIEW_MODE_MIBI="Masked Input over BG Image"
+
+def print_colored_line(textLine:str, color=Fore.RED):
+    print(color,end='')
+    print(textLine,end='')
+    print(Style.RESET_ALL)
 
 #Unlike what the documentation says, gradio's ColorPicker actually returns 4 kinds of strings:
 # color changed to: 'rgba(49.836245031524115, 105.8758538593013, 134.61874999999998, 1)' type=<class 'str'>
@@ -41,11 +47,11 @@ def parse_color_str(clrstr):
     return f"#{r:02x}{g:02x}{b:02x}" # to #rrggbb format
 
 def return_selection_index(evt: gr.SelectData):
-    print("return_selection_index() called, index:", evt.index)
+    print_colored_line(f"return_selection_index() called, index={evt.index}")
     return evt.index
 
 def create_mask_from_input(generated_masks,input_image, onnx_provider, model_selection):
-    print("create_mask_from_input() called")
+    print_colored_line("create_mask_from_input() called")
     if input_image is None: #if there's no input image yet
         gr.Info(MSG_NO_INPUT_FOR_MASK)
         return gr.skip(), gr.skip()
@@ -66,10 +72,11 @@ def create_mask_from_input(generated_masks,input_image, onnx_provider, model_sel
     else: generated_masks.append((img,None))
     select_idx = len(generated_masks) - 1
     mg = gr.Gallery(value=generated_masks, selected_index=select_idx)
+    print_colored_line("create_mask_from_input() finished")
     return mg,select_idx
 
 def update_combined_view(view_mode, input_image, generated_masks, selected_idx, bg_color,bg_image):
-    print(f"update_combined_view(), view_mode={view_mode}")
+    print_colored_line(f"update_combined_view(), view_mode={view_mode}")
 
     if view_mode == "Input": return input_image
 
@@ -250,8 +257,10 @@ with gr.Blocks(fill_width=True) as demo:
     )
 
     def _mask_gallery_select_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
+        print_colored_line(f"_mask_gallery_select_update_view() called, selected_idx={selected_idx}")
         if view_mode == "Input": return gr.skip() #no need to update combined view
         return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
+
     mask_gallery.select( #new mask selected
         fn=return_selection_index, inputs=[], outputs=selected_idx
     ).then(
