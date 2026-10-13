@@ -198,10 +198,19 @@ with gr.Blocks(fill_width=True) as demo:
     #inputs to update_combined_view()
     update_combined_view_inputs=[ view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image]
 
+    def _mask_gallery_select_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
+        print_colored_line(f"_mask_gallery_select_update_view() called, selected_idx={selected_idx}")
+        if view_mode == "Input": return gr.skip() #no need to update combined view
+        return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
+
     btn_CreateMask.click( # create mask button clicked
         fn=create_mask_from_input, #this will trigger mask_gallery.select
         inputs=[mask_gallery,input_image, onnx_provider, model_selection],
         outputs=[mask_gallery,selected_idx]
+    ).then(
+        fn=_mask_gallery_select_update_view,
+        inputs=update_combined_view_inputs,
+        outputs=[combined_view]
     )
 
     input_image.input( # input image changed by user
@@ -219,6 +228,7 @@ with gr.Blocks(fill_width=True) as demo:
     def _bg_color_input_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
         if view_mode != VIEW_MODE_MIBC: return gr.skip() #not masked input over background color
         return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
+
     bg_color.input( #background color changed by user
         fn=_bg_color_input_update_view,
         inputs=update_combined_view_inputs,
@@ -228,6 +238,7 @@ with gr.Blocks(fill_width=True) as demo:
     def _bg_image_input_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
         if view_mode != VIEW_MODE_MIBI: return gr.skip() #not masked input over background image
         return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
+
     bg_image.input( #background image changed by user
         fn=_bg_image_input_update_view,
         inputs=update_combined_view_inputs,
@@ -254,12 +265,11 @@ with gr.Blocks(fill_width=True) as demo:
         fn=filter_mask, #this will trigger mask_gallery.select
         inputs=[mask_gallery, selected_idx, chk_dilate, kernel_size, iterations, chk_invert, chk_blur, blur_kernel_size],
         outputs=[mask_gallery,selected_idx]
+    ).then(
+        fn=_mask_gallery_select_update_view,
+        inputs=update_combined_view_inputs,
+        outputs=[combined_view]
     )
-
-    def _mask_gallery_select_update_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image):
-        print_colored_line(f"_mask_gallery_select_update_view() called, selected_idx={selected_idx}")
-        if view_mode == "Input": return gr.skip() #no need to update combined view
-        return update_combined_view(view_mode, input_image, mask_gallery,selected_idx, bg_color,bg_image)
 
     mask_gallery.select( #new mask selected
         fn=return_selection_index, inputs=[], outputs=selected_idx
@@ -274,4 +284,5 @@ with gr.Blocks(fill_width=True) as demo:
         inputs=update_combined_view_inputs,
         outputs=[combined_view]
     )
+
 demo.launch()
